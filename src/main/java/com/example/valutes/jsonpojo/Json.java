@@ -3,11 +3,6 @@ package com.example.valutes.jsonpojo;
 import com.example.valutes.entities.Valute;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
-
 import java.util.Date;
 import java.util.Map;
 

@@ -15,25 +15,28 @@ import java.util.Map;
 
 public class Helper {
 
-    public static void recursion(int a , ValuteRepo valuteRepo , String originalUrl) {
+    public static void recursion(int countOfDays, ValuteRepo valuteRepo, String originalUrl) {
 
-            if (a < 31) {
+        if (countOfDays < 31) {
 
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(
-                                new URL(originalUrl).openStream()))){
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(
+                            new URL(originalUrl).openStream()))) {
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 Json json = objectMapper.readValue(reader, Json.class);
 
                 Map<String, Valute> map = json.getValutes();
-                List<Valute> list = Helper.getSelection(map, "USD", "EUR", "CNY", "JPY");
+                List<Valute> list = getSelection(map, "USD", "EUR", "CNY", "JPY");
 
-                valuteRepo.saveAll(list);
+                for (Valute val : list) {
+                    val.setDate(json.getDate());
+                    valuteRepo.save(val);
+                }
 
-                recursion(a+1 , valuteRepo, "https:"+json.getPreviousUrl());
+                recursion(countOfDays + 1, valuteRepo, "https:" + json.getPreviousUrl());
 
-            } catch(IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

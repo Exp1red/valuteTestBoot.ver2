@@ -36,6 +36,7 @@ public class Valute  {
     @JsonProperty("Previous")
     private double previous;
 
+    @JsonIgnore
     private Date date;
 
 
