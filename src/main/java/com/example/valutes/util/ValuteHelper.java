@@ -4,18 +4,30 @@ import com.example.valutes.entities.Valute;
 import com.example.valutes.jsonpojo.Json;
 import com.example.valutes.repos.ValuteRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Helper {
+@Service
+public class ValuteHelper {
+    final
+    ValuteRepo valuteRepo;
 
-    public static void recursion(int countOfDays, ValuteRepo valuteRepo, String originalUrl) {
+    public ValuteHelper(ValuteRepo valuteRepo) {
+        this.valuteRepo = valuteRepo;
+    }
+
+    public  void getStatisticOfValuteForMonth(int countOfDays, String originalUrl) {
 
         if (countOfDays < 31) {
 
@@ -34,12 +46,29 @@ public class Helper {
                     valuteRepo.save(val);
                 }
 
-                recursion(countOfDays + 1, valuteRepo, "https:" + json.getPreviousUrl());
+                getStatisticOfValuteForMonth(countOfDays + 1, "https:" + json.getPreviousUrl());
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public  Map<String , List <Double>> getRatio(String charCode ,
+                                                       String ... charCodesOfOtherValutes){
+
+        Map<String , List<Double>> resultMap = new HashMap<>();
+        List<Double> listOfValue = valuteRepo.getConcreteValueOrderByValute(charCode);
+
+        for (String str : charCodesOfOtherValutes) {
+
+        }
+
+//        new BigDecimal(valute.getValue() / (otherValute.getValue() )
+//                .setScale(4 , RoundingMode.UP).doubleValue());
+
+
+
     }
 
 
