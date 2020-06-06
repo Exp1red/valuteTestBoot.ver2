@@ -2,7 +2,7 @@ package com.example.valutes.controller;
 
 
 import com.example.valutes.repos.ValuteRepo;
-import com.example.valutes.util.Helper;
+import com.example.valutes.util.ValuteHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -18,14 +18,14 @@ public class MainController {
 
     @GetMapping("/parse")
     public String getAndParse() {
-        Helper.recursion(1, valuteRepo, "https://www.cbr-xml-daily.ru/daily_json.js");
+        ValuteHelper.getStatisticOfValuteForMonth(1, valuteRepo, "https://www.cbr-xml-daily.ru/daily_json.js");
         return "parse";
     }
 
 
     @GetMapping("/chart")
     public String chart() {
-        return "chart";
+        return "chartOfRatioUSD";
     }
 
 
