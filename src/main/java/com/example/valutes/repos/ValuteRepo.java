@@ -15,4 +15,7 @@ public interface ValuteRepo extends JpaRepository<Valute, Long> {
     @Query("select value from Valute where charCode = ?1 order by  date asc ")
     List<Double> getConcreteValue(String charCode);
 
+    @Query("select nominal from Valute where charCode = ?1 order by  date asc")
+    List<Integer> getConcreteNominal(String charCode);
+
 }
