@@ -52,12 +52,16 @@ public class ValuteHelper {
         }
     }
 
-
+// коэффициент отношения 1 ед валюты к 1, иначе корявый график из-за того что на api ресурса меняется номинал CNY
 
     public Map<String, List<Double>> getRatio(String charCode, String[] charCodesOfOtherValutes) {
 
         Map<String, List<Double>> resultMapOfTotalRatio = new LinkedHashMap<>();
         List<Double> listOfValue = valuteRepo.getConcreteValue(charCode);
+
+        List<Integer> listOfConcreteNominal = valuteRepo.getConcreteNominal(charCode);
+
+
 
         for (String str : charCodesOfOtherValutes) {
             if (!str.equals(charCode)) {
@@ -66,9 +70,14 @@ public class ValuteHelper {
                 int i = 0;
                 List<Double> concreteValue = valuteRepo.getConcreteValue(str);
 
+
+                List<Integer> listOfOtherConcreteNominal = valuteRepo.getConcreteNominal(str);
+
+
                 for (Double otherValue : concreteValue) {
 
-                    listOfRatio.add(new BigDecimal(listOfValue.get(i) / otherValue)
+                    listOfRatio.add(new BigDecimal((listOfValue.get(i)/(double)listOfConcreteNominal.get(i))
+                            / (otherValue/(double)listOfOtherConcreteNominal.get(i)))
                             .setScale(4, RoundingMode.UP).doubleValue());
 
                     i++;
