@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.Map;
 
 
-public class Json {
+public class IncomeJsonAPI {
 
     @JsonProperty("Date")
     private Date date;

@@ -1,10 +1,9 @@
 package com.example.valutes.util;
 
 import com.example.valutes.entities.Valute;
-import com.example.valutes.jsonpojo.Json;
+import com.example.valutes.jsonpojo.IncomeJsonAPI;
 import com.example.valutes.repos.ValuteRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -14,29 +13,28 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class ValuteHelper {
-    final
-    ValuteRepo valuteRepo;
+    final ValuteRepo valuteRepo;
 
     public ValuteHelper(ValuteRepo valuteRepo) {
         this.valuteRepo = valuteRepo;
     }
 
-    public  void getStatisticOfValuteForMonth(int countOfDays, String originalUrl) {
+    public void getStatisticOfValuteForMonth(int countOfDays, String originalUrl) {
 
-        if (countOfDays < 31) {
+        if (countOfDays > 0) {
 
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(
                             new URL(originalUrl).openStream()))) {
 
                 ObjectMapper objectMapper = new ObjectMapper();
-                Json json = objectMapper.readValue(reader, Json.class);
+                IncomeJsonAPI json = objectMapper.readValue(reader, IncomeJsonAPI.class);
 
                 Map<String, Valute> map = json.getValutes();
                 List<Valute> list = getSelection(map, "USD", "EUR", "CNY", "JPY");
@@ -46,7 +44,7 @@ public class ValuteHelper {
                     valuteRepo.save(val);
                 }
 
-                getStatisticOfValuteForMonth(countOfDays + 1, "https:" + json.getPreviousUrl());
+                getStatisticOfValuteForMonth(countOfDays - 1, "https:" + json.getPreviousUrl());
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -54,21 +52,31 @@ public class ValuteHelper {
         }
     }
 
-    public  Map<String , List <Double>> getRatio(String charCode ,
-                                                       String ... charCodesOfOtherValutes){
 
-        Map<String , List<Double>> resultMap = new HashMap<>();
-        List<Double> listOfValue = valuteRepo.getConcreteValueOrderByValute(charCode);
+
+    public Map<String, List<Double>> getRatio(String charCode, String[] charCodesOfOtherValutes) {
+
+        Map<String, List<Double>> resultMapOfTotalRatio = new LinkedHashMap<>();
+        List<Double> listOfValue = valuteRepo.getConcreteValue(charCode);
 
         for (String str : charCodesOfOtherValutes) {
+            if (!str.equals(charCode)) {
+                List<Double> listOfRatio = new ArrayList<>();
 
+                int i = 0;
+                List<Double> concreteValue = valuteRepo.getConcreteValue(str);
+
+                for (Double otherValue : concreteValue) {
+
+                    listOfRatio.add(new BigDecimal(listOfValue.get(i) / otherValue)
+                            .setScale(4, RoundingMode.UP).doubleValue());
+
+                    i++;
+                }
+                resultMapOfTotalRatio.put(str, listOfRatio);
+            }
         }
-
-//        new BigDecimal(valute.getValue() / (otherValute.getValue() )
-//                .setScale(4 , RoundingMode.UP).doubleValue());
-
-
-
+        return resultMapOfTotalRatio;       // TODO: 06.06.2020 change logic to STREAM and need proxyCache and Logger ETC
     }
 
 
@@ -78,5 +86,9 @@ public class ValuteHelper {
             list.add(map.get(arg));
         }
         return list;
+    }
+
+    public String[] getArrayOfCharCodes() {
+        return new String[]{"USD", "EUR", "CNY", "JPY"};
     }
 }
