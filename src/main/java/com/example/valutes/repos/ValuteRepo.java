@@ -9,11 +9,10 @@ import java.util.List;
 
 public interface ValuteRepo extends JpaRepository<Valute, Long> {
 
-
     @Query("select distinct date from Valute order by date asc ")
     List<Date> getSortedDate();
 
     @Query("select value from Valute where charCode = ?1 order by  date asc ")
-    List<Double> getConcreteValueOrderByValute(String charCode);
+    List<Double> getConcreteValue(String charCode);
 
 }
