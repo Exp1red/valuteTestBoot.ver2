@@ -5,6 +5,8 @@ import com.example.valutes.jsonpojo.ForChartJsonOne;
 import com.example.valutes.repos.ValuteRepo;
 import com.example.valutes.util.ValuteHelper;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 public class JsonController {
+    private static final Logger log = LoggerFactory.getLogger(JsonController.class);
     final ValuteRepo valuteRepo;
     final ValuteHelper valuteHelper;
 
@@ -29,6 +32,7 @@ public class JsonController {
 
     @GetMapping("/getDate")
     public List<String> getDate() {
+        log.debug("getting list of dates for chart");
         return valuteRepo.getSortedDate().stream()
                 .map(x -> (new SimpleDateFormat("dd/MM/yy").format(x)))
                 .collect(Collectors.toList());
@@ -36,7 +40,7 @@ public class JsonController {
 
     @GetMapping("/getRatio/{charCode}")
     public Map<String, List<Double>> getRatioCurrentValuteToOthers(@PathVariable("charCode") String charCode) {
-
+        log.debug("getting ratio of "+ charCode +" to others");
         return valuteHelper.getRatio(charCode, valuteHelper.getArrayOfCharCodes());
     }
 
@@ -53,7 +57,7 @@ public class JsonController {
         forChartJson.setRatios(ratios);
 
         Gson gson = new Gson();
-        return gson.toJson(forChartJson); // работает , но я не умею парсить такой json в график
+        return gson.toJson(forChartJson);
 
     }
 

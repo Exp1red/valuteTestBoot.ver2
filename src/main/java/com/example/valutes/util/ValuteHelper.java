@@ -4,6 +4,8 @@ import com.example.valutes.entities.Valute;
 import com.example.valutes.jsonpojo.IncomeJsonAPI;
 import com.example.valutes.repos.ValuteRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -19,12 +21,14 @@ import java.util.Map;
 
 @Service
 public class ValuteHelper {
-    final ValuteRepo valuteRepo;
+    private static final Logger log = LoggerFactory.getLogger(ValuteHelper.class);
+    private final ValuteRepo valuteRepo;
 
     public ValuteHelper(ValuteRepo valuteRepo) {
         this.valuteRepo = valuteRepo;
     }
 
+    // сбор 30 json'ов валют и сохранение в бд
     public void getStatisticOfValuteForMonth(int countOfDays, String originalUrl) {
 
         if (countOfDays > 0) {
@@ -32,7 +36,7 @@ public class ValuteHelper {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(
                             new URL(originalUrl).openStream()))) {
-
+                log.debug("connected to url");
                 ObjectMapper objectMapper = new ObjectMapper();
                 IncomeJsonAPI json = objectMapper.readValue(reader, IncomeJsonAPI.class);
 
@@ -43,24 +47,22 @@ public class ValuteHelper {
                     val.setDate(json.getDate());
                     valuteRepo.save(val);
                 }
+                    log.debug("4 valutes of a day has been saved");
 
                 getStatisticOfValuteForMonth(countOfDays - 1, "https:" + json.getPreviousUrl());
 
             } catch (IOException e) {
-                e.printStackTrace();
+                log.warn("problem with url , parsing or save valute of incoming json" , e);
             }
         }
     }
 
-// коэффициент отношения 1 ед валюты к 1, иначе корявый график из-за того что на api ресурса меняется номинал CNY
-
+    // взятие стоимости валюты и деление на стоимость других для вычисления коэфициента
+    // p.s. на графиках виден скачок из-за изменения номинала одной из валют, предоставляемой json'ом
     public Map<String, List<Double>> getRatio(String charCode, String[] charCodesOfOtherValutes) {
 
         Map<String, List<Double>> resultMapOfTotalRatio = new LinkedHashMap<>();
         List<Double> listOfValue = valuteRepo.getConcreteValue(charCode);
-
-        List<Integer> listOfConcreteNominal = valuteRepo.getConcreteNominal(charCode);
-
 
 
         for (String str : charCodesOfOtherValutes) {
@@ -70,25 +72,22 @@ public class ValuteHelper {
                 int i = 0;
                 List<Double> concreteValue = valuteRepo.getConcreteValue(str);
 
-
-                List<Integer> listOfOtherConcreteNominal = valuteRepo.getConcreteNominal(str);
-
-
                 for (Double otherValue : concreteValue) {
 
-                    listOfRatio.add(new BigDecimal((listOfValue.get(i)/(double)listOfConcreteNominal.get(i))
-                            / (otherValue/(double)listOfOtherConcreteNominal.get(i)))
+                    listOfRatio.add(new BigDecimal((listOfValue.get(i))
+                            / (otherValue))
                             .setScale(4, RoundingMode.UP).doubleValue());
 
                     i++;
                 }
                 resultMapOfTotalRatio.put(str, listOfRatio);
+                log.debug("calculate ratio and put to map complete");
             }
         }
-        return resultMapOfTotalRatio;       // TODO: 06.06.2020 change logic to STREAM and need proxyCache and Logger ETC
+        return resultMapOfTotalRatio;
     }
 
-
+    // получение выборки тех валют , которые нужны
     public static List<Valute> getSelection(Map<String, Valute> map, String... args) {
         List<Valute> list = new ArrayList<>();
         for (String arg : args) {
@@ -97,6 +96,7 @@ public class ValuteHelper {
         return list;
     }
 
+    // вспомогательный метод
     public String[] getArrayOfCharCodes() {
         return new String[]{"USD", "EUR", "CNY", "JPY"};
     }
